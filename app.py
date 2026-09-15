@@ -93,7 +93,14 @@ def read_room(code):
     conn = get_db()
     room = conn.execute("SELECT state FROM ludo_rooms WHERE code = ?", (code.upper(),)).fetchone()
     conn.close()
-    return json.loads(room["state"]) if room else None
+    if not room:
+        return None
+    state = json.loads(room["state"])
+    if state.get("positions") and isinstance(state["positions"][0], int):
+        state["positions"] = [[state["positions"][0], -1, -1, -1], [state["positions"][1], -1, -1, -1]]
+    state.setdefault("dice", None)
+    state.setdefault("winner", None)
+    return state
 
 
 def save_room(code, state):
@@ -119,7 +126,7 @@ def home():
 @app.post("/api/ludo/create")
 def create_ludo_room():
     code = new_room_code()
-    state = {"players": 1, "turn": 1, "dice": None, "positions": [0, 0], "winner": None}
+    state = {"players": 1, "turn": 1, "dice": None, "positions": [[-1, -1, -1, -1], [-1, -1, -1, -1]], "winner": None}
     conn = get_db()
     conn.execute("INSERT INTO ludo_rooms (code, state) VALUES (?, ?)", (code, json.dumps(state)))
     conn.commit()
@@ -153,6 +160,7 @@ def ludo_state(code):
 def ludo_move(code):
     data = request.get_json(silent=True) or {}
     player = int(data.get("player", 0))
+    piece = int(data.get("piece", 0))
     state = read_room(code)
     if not state:
         return {"error": "Salon introuvable."}, 404
@@ -160,13 +168,29 @@ def ludo_move(code):
         return {"error": "Invite un deuxième joueur avant de jouer."}, 409
     if player != state["turn"] or state["winner"]:
         return {"error": "Ce n'est pas ton tour."}, 409
+    if piece not in range(4):
+        return {"error": "Pion invalide."}, 400
     roll = random.randint(1, 6)
     state["dice"] = roll
-    state["positions"][player - 1] = min(24, state["positions"][player - 1] + roll)
-    if state["positions"][player - 1] >= 24:
+    current_position = state["positions"][player - 1][piece]
+    next_position = current_position
+    if current_position == -1 and roll == 6:
+        next_position = 0
+    elif current_position >= 0 and current_position + roll <= 24:
+        next_position = current_position + roll
+    state["positions"][player - 1][piece] = next_position
+    captured = False
+    if next_position >= 0 and next_position < 24 and next_position not in {0, 6, 12, 18}:
+        other_player = 1 if player == 2 else 2
+        for other_piece in range(4):
+            if state["positions"][other_player - 1][other_piece] == next_position:
+                state["positions"][other_player - 1][other_piece] = -1
+                captured = True
+    if all(position == 24 for position in state["positions"][player - 1]):
         state["winner"] = player
     else:
-        state["turn"] = 2 if player == 1 else 1
+        state["turn"] = player if roll == 6 else (2 if player == 1 else 1)
+    state["captured"] = captured
     save_room(code, state)
     return state
 
