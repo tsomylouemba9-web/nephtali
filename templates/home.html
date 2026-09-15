@@ -78,15 +78,24 @@
   .room-note strong { color: var(--rose); letter-spacing: .12em; font-size: 20px; }
   .board-card { margin-top: 20px; display: none; }
   .board-card.is-visible { display: block; }
-  .board-status { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 20px; color: #806d77; font-size: 13px; }
-  .ludo-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; max-width: 650px; margin: auto; }
-  .ludo-cell { aspect-ratio: 1; background: #f3dedb; border: 1px solid rgba(36,28,44,.08); display: grid; place-items: center; font-size: clamp(12px, 2vw, 19px); position: relative; }
-  .ludo-cell.path { background: #fffaf2; }
-  .ludo-cell.goal { background: var(--gold); }
-  .ludo-piece { width: 58%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 4px 8px rgba(36,28,44,.18); }
+  .board-status { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 20px; color: #806d77; font-size: 13px; align-items: center; }
+  .board-status strong { background: var(--ink); color: white; border-radius: 999px; padding: 8px 13px; font-size: 12px; }
+  .ludo-board { display: grid; grid-template-columns: repeat(11, 1fr); gap: 3px; max-width: 660px; margin: auto; padding: 8px; border: 9px solid var(--ink); background: #d9b36b; box-shadow: 0 16px 0 rgba(36,28,44,.13); }
+  .ludo-cell { aspect-ratio: 1; background: #f7e9d7; border: 1px solid rgba(36,28,44,.1); display: grid; place-items: center; position: relative; }
+  .ludo-cell.home { border-radius: 5px; }
+  .ludo-cell.home.one { background: #f5b7c0; } .ludo-cell.home.two { background: #aecbd6; }
+  .ludo-cell.path { background: #fffaf2; box-shadow: inset 0 0 0 2px rgba(230,184,102,.22); }
+  .ludo-cell.safe::after { content: '✦'; color: var(--gold); font-size: clamp(10px, 2vw, 17px); }
+  .ludo-cell.goal { background: var(--gold); border-radius: 50%; }
+  .ludo-cell.goal::after { content: '♥'; color: var(--rose); font-size: clamp(15px, 3vw, 27px); }
+  .ludo-piece { width: 62%; aspect-ratio: 1; border-radius: 50%; border: 3px solid rgba(255,255,255,.75); box-shadow: 0 4px 8px rgba(36,28,44,.28), inset 0 -4px 0 rgba(36,28,44,.13); z-index: 1; animation: piece-pop .45s cubic-bezier(.2,1.5,.5,1) both; }
   .ludo-piece.one { background: var(--rose); } .ludo-piece.two { background: #5e8fa8; }
-  .ludo-controls { display: flex; align-items: center; justify-content: space-between; max-width: 650px; margin: 20px auto 0; gap: 20px; }
-  .dice { font: 700 32px 'Playfair Display', serif; color: var(--rose); }
+  .ludo-controls { display: flex; align-items: center; justify-content: space-between; max-width: 660px; margin: 25px auto 0; gap: 20px; }
+  .dice { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 13px; background: white; color: var(--ink); border: 3px solid var(--gold); font: 700 32px 'Playfair Display', serif; box-shadow: 0 6px 0 rgba(36,28,44,.12); }
+  .dice.rolling { animation: dice-roll .5s ease both; }
+  .ludo-button:disabled { cursor: not-allowed; opacity: .45; }
+  @keyframes piece-pop { from { opacity: 0; transform: scale(.35) translateY(-12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes dice-roll { 0%,100% { transform: rotate(0) scale(1); } 35% { transform: rotate(18deg) scale(1.15); } 70% { transform: rotate(-14deg) scale(.9); } }
   .ludo-share { color: #806d77; font-size: 12px; margin-top: 16px; text-align: center; }
   @media (max-width: 800px) { .room-box { grid-template-columns: 1fr; } .ludo-head { display: block; } }
   @media (max-width: 800px) { .intro { grid-template-columns: 1fr; gap: 40px; min-height: auto; } .letter-orbit { min-height: 390px; } .game-main { margin-top: 0; } .nav-note { display: none; } .game-nav { padding: 22px 20px; } .game-main { padding-inline: 20px; } }
@@ -126,7 +135,7 @@
     <section class="ludo" id="ludo">
       <div class="ludo-head"><div><div class="eyebrow">Mini-jeu · chapitre bonus</div><h2>Ludo des cœurs</h2><p>Crée un salon, partage son code et faites avancer vos cœurs jusqu’à l’arrivée.</p></div><button class="restart-button" id="backToQuiz">Retour au quiz</button></div>
       <div class="room-box"><div><label for="roomCode">Code du salon</label><input id="roomCode" maxlength="5" placeholder="ABCDE" autocomplete="off"></div><button class="ludo-button" id="joinRoom">Rejoindre</button><div class="room-note" id="roomNote">Tu peux aussi <button class="ludo-button" id="createRoom">créer un salon</button> et envoyer le code à Chandrelle.</div></div>
-      <div class="board-card" id="boardCard"><div class="board-status"><span id="playerLabel">Joueur 1</span><strong id="turnLabel">En attente du deuxième joueur…</strong><span id="roomLabel"></span></div><div class="ludo-board" id="ludoBoard"></div><div class="ludo-controls"><div class="dice" id="dice">♡</div><button class="ludo-button" id="rollButton" disabled>Lancer le dé</button></div><div class="ludo-share">Chaque tour fait avancer ton cœur de 1 à 6 cases. Le premier à 24 gagne.</div></div>
+      <div class="board-card" id="boardCard"><div class="board-status"><span id="playerLabel">Joueur 1</span><strong id="turnLabel">En attente du deuxième joueur…</strong><span id="roomLabel"></span></div><div class="ludo-board" id="ludoBoard"></div><div class="ludo-controls"><div class="dice" id="dice">♡</div><button class="ludo-button" id="rollButton" disabled>Lancer le dé</button></div><div class="ludo-share">Les cœurs avancent sur la piste. Les cases ✦ sont sûres. Le premier à atteindre la maison gagne.</div></div>
     </section>
 
     <section class="result" id="result">
@@ -193,11 +202,13 @@
   document.getElementById('quizMode').onclick = () => showMode('quiz'); document.getElementById('ludoMode').onclick = () => showMode('ludo'); document.getElementById('backToQuiz').onclick = () => showMode('quiz');
   const roomNote = document.getElementById('roomNote'), boardCard = document.getElementById('boardCard');
   async function ludoRequest(url, options) { const response = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options }); const data = await response.json(); if (!response.ok) throw new Error(data.error); return data; }
-  function drawBoard(state) { const board = document.getElementById('ludoBoard'); board.innerHTML = ''; for (let i = 0; i < 32; i++) { const cell = document.createElement('div'); cell.className = `ludo-cell ${i < 24 ? 'path' : 'goal'}`; if (i < 24) cell.textContent = i + 1; [0, 1].forEach(player => { if (state.positions[player] === i + 1) { const piece = document.createElement('span'); piece.className = `ludo-piece ${player === 0 ? 'one' : 'two'}`; cell.appendChild(piece); } }); board.appendChild(cell); } }
+  const boardRoute = [[5,0],[5,1],[5,2],[4,2],[3,2],[2,2],[2,3],[2,4],[2,5],[2,6],[2,7],[3,7],[4,7],[5,7],[5,8],[5,9],[5,10],[6,10],[7,10],[8,8],[8,7],[8,6],[8,5],[8,4]];
+  const safeCells = new Set([0, 6, 12, 18]);
+  function drawBoard(state) { const board = document.getElementById('ludoBoard'); board.innerHTML = ''; for (let row = 0; row < 11; row++) { for (let column = 0; column < 11; column++) { const cell = document.createElement('div'); const routeIndex = boardRoute.findIndex(([r, c]) => r === row && c === column); const inHomeOne = row < 3 && column < 3; const inHomeTwo = row > 7 && column > 7; cell.className = `ludo-cell ${routeIndex >= 0 ? 'path' : ''} ${inHomeOne ? 'home one' : ''} ${inHomeTwo ? 'home two' : ''} ${routeIndex === 23 ? 'goal' : ''} ${safeCells.has(routeIndex) ? 'safe' : ''}`; if (routeIndex >= 0 && routeIndex < 23) cell.setAttribute('aria-label', `Case ${routeIndex + 1}`); [0, 1].forEach(player => { if (state.positions[player] === routeIndex + 1) { const piece = document.createElement('span'); piece.className = `ludo-piece ${player === 0 ? 'one' : 'two'}`; piece.title = `Cœur du joueur ${player + 1}`; cell.appendChild(piece); } }); board.appendChild(cell); } } }
   function updateBoard(state) { drawBoard(state); document.getElementById('turnLabel').textContent = state.winner ? `Le joueur ${state.winner} a gagné ♥` : state.players < 2 ? 'En attente du deuxième joueur…' : state.turn === playerNumber ? 'À toi de jouer ♥' : `Tour du joueur ${state.turn}`; document.getElementById('dice').textContent = state.dice || '♡'; document.getElementById('rollButton').disabled = state.players < 2 || state.turn !== playerNumber || Boolean(state.winner); }
   async function enterRoom(data) { roomCode = data.code; playerNumber = data.player; boardCard.classList.add('is-visible'); document.getElementById('playerLabel').textContent = `Joueur ${playerNumber}`; document.getElementById('roomLabel').textContent = `Salon ${roomCode}`; document.getElementById('roomCode').value = roomCode; updateBoard(data.state); clearInterval(pollTimer); pollTimer = setInterval(async () => { try { updateBoard(await ludoRequest(`/api/ludo/${roomCode}`)); } catch (error) {} }, 1800); }
   document.getElementById('createRoom').onclick = async () => { try { await enterRoom(await ludoRequest('/api/ludo/create', { method: 'POST', body: '{}' })); roomNote.innerHTML = 'Partage ce code avec ton partenaire : <strong>' + roomCode + '</strong>'; } catch (error) { roomNote.textContent = error.message; } };
   document.getElementById('joinRoom').onclick = async () => { try { await enterRoom(await ludoRequest('/api/ludo/join', { method: 'POST', body: JSON.stringify({ code: document.getElementById('roomCode').value }) })); roomNote.textContent = 'Salon rejoint. Que le cœur le plus chanceux gagne.'; } catch (error) { roomNote.textContent = error.message; } };
-  document.getElementById('rollButton').onclick = async () => { try { updateBoard(await ludoRequest(`/api/ludo/${roomCode}/move`, { method: 'POST', body: JSON.stringify({ player: playerNumber }) })); } catch (error) { roomNote.textContent = error.message; } };
+  document.getElementById('rollButton').onclick = async () => { const dice = document.getElementById('dice'); dice.classList.remove('rolling'); void dice.offsetWidth; dice.classList.add('rolling'); try { updateBoard(await ludoRequest(`/api/ludo/${roomCode}/move`, { method: 'POST', body: JSON.stringify({ player: playerNumber }) })); } catch (error) { roomNote.textContent = error.message; } };
 </script>
 {% endblock %}
