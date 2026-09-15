@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
+import json
+import random
+import string
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +67,38 @@ def init_db():
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ludo_rooms (
+            code TEXT PRIMARY KEY,
+            state TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+def new_room_code():
+    conn = get_db()
+    while True:
+        code = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        if not conn.execute("SELECT 1 FROM ludo_rooms WHERE code = ?", (code,)).fetchone():
+            conn.close()
+            return code
+
+
+def read_room(code):
+    conn = get_db()
+    room = conn.execute("SELECT state FROM ludo_rooms WHERE code = ?", (code.upper(),)).fetchone()
+    conn.close()
+    return json.loads(room["state"]) if room else None
+
+
+def save_room(code, state):
+    conn = get_db()
+    conn.execute("UPDATE ludo_rooms SET state = ? WHERE code = ?", (json.dumps(state), code.upper()))
     conn.commit()
     conn.close()
 
@@ -76,6 +111,61 @@ def inject_user():
 @app.route("/")
 def home():
     return render_template("home.html")
+
+
+@app.post("/api/ludo/create")
+def create_ludo_room():
+    code = new_room_code()
+    state = {"players": 1, "turn": 1, "dice": None, "positions": [0, 0], "winner": None}
+    conn = get_db()
+    conn.execute("INSERT INTO ludo_rooms (code, state) VALUES (?, ?)", (code, json.dumps(state)))
+    conn.commit()
+    conn.close()
+    return {"code": code, "player": 1, "state": state}
+
+
+@app.post("/api/ludo/join")
+def join_ludo_room():
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "").strip().upper()
+    state = read_room(code)
+    if not state:
+        return {"error": "Salon introuvable."}, 404
+    if state["players"] >= 2:
+        return {"error": "Ce salon est déjà complet."}, 409
+    state["players"] = 2
+    save_room(code, state)
+    return {"code": code, "player": 2, "state": state}
+
+
+@app.get("/api/ludo/<code>")
+def ludo_state(code):
+    state = read_room(code)
+    if not state:
+        return {"error": "Salon introuvable."}, 404
+    return state
+
+
+@app.post("/api/ludo/<code>/move")
+def ludo_move(code):
+    data = request.get_json(silent=True) or {}
+    player = int(data.get("player", 0))
+    state = read_room(code)
+    if not state:
+        return {"error": "Salon introuvable."}, 404
+    if state["players"] < 2:
+        return {"error": "Invite un deuxième joueur avant de jouer."}, 409
+    if player != state["turn"] or state["winner"]:
+        return {"error": "Ce n'est pas ton tour."}, 409
+    roll = random.randint(1, 6)
+    state["dice"] = roll
+    state["positions"][player - 1] = min(24, state["positions"][player - 1] + roll)
+    if state["positions"][player - 1] >= 24:
+        state["winner"] = player
+    else:
+        state["turn"] = 2 if player == 1 else 1
+    save_room(code, state)
+    return state
 
 
 @app.route("/auth", methods=["GET", "POST"])

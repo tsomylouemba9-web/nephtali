@@ -59,6 +59,36 @@
   .reveal-word { margin: 35px auto; color: var(--ink); font: 700 clamp(2rem, 6vw, 4.2rem) 'Playfair Display', serif; letter-spacing: .18em; }
   .restart-button { background: transparent; border: 1px solid var(--ink); color: var(--ink); padding: 14px 21px; margin-top: 26px; }
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .mode-switch { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+  .mode-button { border: 1px solid rgba(36,28,44,.2); background: rgba(255,249,242,.6); color: var(--ink); padding: 12px 15px; cursor: pointer; font: 700 12px 'DM Sans', sans-serif; }
+  .mode-button.active, .mode-button:hover { background: var(--ink); color: white; }
+  .level-strip { display: flex; gap: 8px; margin: 0 0 20px; }
+  .level-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(36,28,44,.15); }
+  .level-dot.active { background: var(--rose); box-shadow: 0 0 0 4px rgba(229,107,131,.16); }
+  .ludo { display: none; max-width: 900px; margin: 0 auto; padding: 28px 0; animation: rise .5s ease both; }
+  .ludo.is-visible { display: block; }
+  .ludo-head { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 25px; }
+  .ludo h2 { font: 700 38px 'Playfair Display', serif; margin: 8px 0; }
+  .room-box, .board-card { background: rgba(255,249,242,.8); border: 1px solid rgba(36,28,44,.12); padding: 25px; }
+  .room-box { display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: end; }
+  .room-box label { display: block; color: #806d77; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+  .room-box input { width: 100%; padding: 14px; border: 1px solid #e7d7d4; background: white; font: 700 16px 'DM Sans', sans-serif; text-transform: uppercase; }
+  .ludo-button { background: var(--ink); color: white; border: 0; padding: 14px 18px; cursor: pointer; font: 700 13px 'DM Sans', sans-serif; }
+  .room-note { grid-column: 1 / -1; color: #806d77; font-size: 13px; }
+  .room-note strong { color: var(--rose); letter-spacing: .12em; font-size: 20px; }
+  .board-card { margin-top: 20px; display: none; }
+  .board-card.is-visible { display: block; }
+  .board-status { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 20px; color: #806d77; font-size: 13px; }
+  .ludo-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; max-width: 650px; margin: auto; }
+  .ludo-cell { aspect-ratio: 1; background: #f3dedb; border: 1px solid rgba(36,28,44,.08); display: grid; place-items: center; font-size: clamp(12px, 2vw, 19px); position: relative; }
+  .ludo-cell.path { background: #fffaf2; }
+  .ludo-cell.goal { background: var(--gold); }
+  .ludo-piece { width: 58%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 4px 8px rgba(36,28,44,.18); }
+  .ludo-piece.one { background: var(--rose); } .ludo-piece.two { background: #5e8fa8; }
+  .ludo-controls { display: flex; align-items: center; justify-content: space-between; max-width: 650px; margin: 20px auto 0; gap: 20px; }
+  .dice { font: 700 32px 'Playfair Display', serif; color: var(--rose); }
+  .ludo-share { color: #806d77; font-size: 12px; margin-top: 16px; text-align: center; }
+  @media (max-width: 800px) { .room-box { grid-template-columns: 1fr; } .ludo-head { display: block; } }
   @media (max-width: 800px) { .intro { grid-template-columns: 1fr; gap: 40px; min-height: auto; } .letter-orbit { min-height: 390px; } .game-main { margin-top: 0; } .nav-note { display: none; } .game-nav { padding: 22px 20px; } .game-main { padding-inline: 20px; } }
 </style>
 
@@ -69,8 +99,9 @@
       <div>
         <div class="eyebrow">Chapitre 01 · le cœur sait</div>
         <h1>Chandrelle,<br><em>à toi</em> de jouer.</h1>
-        <p>Un petit quiz imaginé autour de ton prénom. Huit questions, huit lettres, et une surprise au bout du chemin.</p>
+        <p>Un petit univers imaginé autour de ton prénom : trois chapitres, des questions qui deviennent plus personnelles, puis un Ludo amoureux à jouer à deux.</p>
         <button class="start-button" id="startButton">Ouvrir le quiz <span aria-hidden="true">→</span></button>
+        <div class="mode-switch"><button class="mode-button active" id="quizMode">Quiz en niveaux</button><button class="mode-button" id="ludoMode">Ludo à deux</button></div>
       </div>
       <div class="letter-orbit" aria-label="Les lettres de Nephtali">
         <div class="orbit-ring">
@@ -81,14 +112,21 @@
     </section>
 
     <section class="quiz" id="quiz" aria-live="polite">
-      <div class="quiz-top"><h2>Le quiz de Chandrelle</h2><div class="step-count"><span id="currentStep">01</span> / 08</div></div>
+      <div class="quiz-top"><div><div class="eyebrow" id="levelName">Chapitre 1 · Les premiers battements</div><h2>Le quiz de Chandrelle</h2></div><div class="step-count"><span id="currentStep">01</span> / 24</div></div>
+      <div class="level-strip"><span class="level-dot active"></span><span class="level-dot"></span><span class="level-dot"></span></div>
       <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
       <div class="question-card">
         <div class="question-kicker" id="questionKicker">Lettre N</div>
         <h3 id="questionText"></h3>
         <div class="answers" id="answers"></div>
-        <div class="question-footer"><div class="heart-score">Affinité <b id="score">0</b> / 8 <span aria-hidden="true">♥</span></div><button class="next-button" id="nextButton">Question suivante →</button></div>
+        <div class="question-footer"><div class="heart-score">Affinité <b id="score">0</b> / 24 <span aria-hidden="true">♥</span></div><button class="next-button" id="nextButton">Question suivante →</button></div>
       </div>
+    </section>
+
+    <section class="ludo" id="ludo">
+      <div class="ludo-head"><div><div class="eyebrow">Mini-jeu · chapitre bonus</div><h2>Ludo des cœurs</h2><p>Crée un salon, partage son code et faites avancer vos cœurs jusqu’à l’arrivée.</p></div><button class="restart-button" id="backToQuiz">Retour au quiz</button></div>
+      <div class="room-box"><div><label for="roomCode">Code du salon</label><input id="roomCode" maxlength="5" placeholder="ABCDE" autocomplete="off"></div><button class="ludo-button" id="joinRoom">Rejoindre</button><div class="room-note" id="roomNote">Tu peux aussi <button class="ludo-button" id="createRoom">créer un salon</button> et envoyer le code à Chandrelle.</div></div>
+      <div class="board-card" id="boardCard"><div class="board-status"><span id="playerLabel">Joueur 1</span><strong id="turnLabel">En attente du deuxième joueur…</strong><span id="roomLabel"></span></div><div class="ludo-board" id="ludoBoard"></div><div class="ludo-controls"><div class="dice" id="dice">♡</div><button class="ludo-button" id="rollButton" disabled>Lancer le dé</button></div><div class="ludo-share">Chaque tour fait avancer ton cœur de 1 à 6 cases. Le premier à 24 gagne.</div></div>
     </section>
 
     <section class="result" id="result">
@@ -102,22 +140,40 @@
 
 <script>
   const questions = [
-    { letter: 'N', text: 'Dans une histoire qui commence bien, qu’est-ce qui compte le plus ?', answers: ['Les grands discours', 'La complicité dans les petits moments', 'Avoir toujours raison'], correct: 1 },
-    { letter: 'E', text: 'Quelle énergie te ressemble le plus, Chandrelle ?', answers: ['Douce, mais pleine de caractère', 'Mystérieuse et imprévisible', 'Toujours prête à faire rire'], correct: 0 },
-    { letter: 'P', text: 'Le rendez-vous parfait serait plutôt…', answers: ['Un coucher de soleil et une longue conversation', 'Une aventure improvisée', 'Un dîner avec de la musique'], correct: 0 },
-    { letter: 'H', text: 'Quel geste fait fondre un cœur sans faire de bruit ?', answers: ['Se souvenir des détails', 'Envoyer une chanson', 'Être là, simplement'], correct: 2 },
-    { letter: 'T', text: 'Dans le mot « tendresse », tu préfères…', answers: ['Le regard qui rassure', 'Le rire qui surprend', 'Le silence qui comprend'], correct: 2 },
-    { letter: 'A', text: 'Quelle promesse mérite d’être tenue ?', answers: ['Ne jamais cesser de choisir l’autre', 'Toujours dire la vérité avec douceur', 'Créer des souvenirs à deux'], correct: 0 },
-    { letter: 'L', text: 'Que devrait toujours avoir une belle relation ?', answers: ['De la liberté', 'De la loyauté', 'Un peu de folie'], correct: 1 },
-    { letter: 'I', text: 'Et si ce quiz avait un message caché… tu le lirais ?', answers: ['Oui, sans hésiter', 'Seulement si c’est romantique', 'Je le sais déjà'], correct: 0 }
+    { level: 1, name: 'Les premiers battements', letter: 'N', text: 'Dans une histoire qui commence bien, qu’est-ce qui compte le plus ?', answers: ['Les grands discours', 'La complicité dans les petits moments', 'Avoir toujours raison'], correct: 1 },
+    { level: 1, name: 'Les premiers battements', letter: 'E', text: 'Quelle énergie te ressemble le plus, Chandrelle ?', answers: ['Douce, mais pleine de caractère', 'Mystérieuse et imprévisible', 'Toujours prête à faire rire'], correct: 0 },
+    { level: 1, name: 'Les premiers battements', letter: 'P', text: 'Le rendez-vous parfait serait plutôt…', answers: ['Un coucher de soleil et une longue conversation', 'Une aventure improvisée', 'Un dîner avec de la musique'], correct: 0 },
+    { level: 1, name: 'Les premiers battements', letter: 'H', text: 'Quel geste fait fondre un cœur sans faire de bruit ?', answers: ['Se souvenir des détails', 'Envoyer une chanson', 'Être là, simplement'], correct: 2 },
+    { level: 1, name: 'Les premiers battements', letter: 'T', text: 'Dans le mot tendresse, tu préfères…', answers: ['Le regard qui rassure', 'Le rire qui surprend', 'Le silence qui comprend'], correct: 2 },
+    { level: 1, name: 'Les premiers battements', letter: 'A', text: 'Quelle promesse mérite d’être tenue ?', answers: ['Ne jamais cesser de choisir l’autre', 'Toujours dire la vérité avec douceur', 'Créer des souvenirs à deux'], correct: 0 },
+    { level: 1, name: 'Les premiers battements', letter: 'L', text: 'Que devrait toujours avoir une belle relation ?', answers: ['De la liberté', 'De la loyauté', 'Un peu de folie'], correct: 1 },
+    { level: 1, name: 'Les premiers battements', letter: 'I', text: 'Et si ce quiz avait un message caché, tu le lirais ?', answers: ['Oui, sans hésiter', 'Seulement si c’est romantique', 'Je le sais déjà'], correct: 0 },
+    { level: 2, name: 'Les secrets partagés', letter: 'N', text: 'Quel souvenir devient précieux avec le temps ?', answers: ['Un fou rire inattendu', 'Une photo parfaite', 'Un cadeau coûteux'], correct: 0 },
+    { level: 2, name: 'Les secrets partagés', letter: 'E', text: 'Pour te sentir aimée, tu choisis…', answers: ['Des mots qui rassurent', 'Une présence fidèle', 'Une surprise spectaculaire'], correct: 1 },
+    { level: 2, name: 'Les secrets partagés', letter: 'P', text: 'Quelle musique accompagnerait une nuit à deux ?', answers: ['Une mélodie douce', 'Un morceau qui fait danser', 'Le silence, parfois'], correct: 0 },
+    { level: 2, name: 'Les secrets partagés', letter: 'H', text: 'Le plus beau signe de confiance, c’est…', answers: ['Pouvoir tout dire', 'Partager ses rêves', 'Rire de ses maladresses'], correct: 0 },
+    { level: 2, name: 'Les secrets partagés', letter: 'T', text: 'Une relation solide sait aussi…', answers: ['Se retrouver après un désaccord', 'Ne jamais être sérieuse', 'Tout faire ensemble'], correct: 0 },
+    { level: 2, name: 'Les secrets partagés', letter: 'A', text: 'Quelle aventure aimerais-tu garder en mémoire ?', answers: ['Un voyage improvisé', 'Un dimanche sans programme', 'Une lettre surprise'], correct: 0 },
+    { level: 2, name: 'Les secrets partagés', letter: 'L', text: 'Quand le cœur hésite, il a besoin de…', answers: ['Temps et douceur', 'Un grand spectacle', 'Une réponse immédiate'], correct: 0 },
+    { level: 2, name: 'Les secrets partagés', letter: 'I', text: 'Quel détail rend une journée spéciale ?', answers: ['Un message au bon moment', 'Un hasard heureux', 'Un regard complice'], correct: 2 },
+    { level: 3, name: 'Le grand oui', letter: 'N', text: 'Choisir quelqu’un chaque jour, c’est surtout…', answers: ['Une liberté', 'Une habitude', 'Une promesse vivante'], correct: 2 },
+    { level: 3, name: 'Le grand oui', letter: 'E', text: 'Quel futur te ferait sourire ?', answers: ['Des projets qui grandissent à deux', 'Une vie toujours parfaite', 'Ne jamais changer'], correct: 0 },
+    { level: 3, name: 'Le grand oui', letter: 'P', text: 'La vraie magie arrive quand…', answers: ['On se comprend sans parler', 'On ose être soi-même', 'Les deux cœurs avancent ensemble'], correct: 2 },
+    { level: 3, name: 'Le grand oui', letter: 'H', text: 'Le mot qui résume le mieux Chandrelle est…', answers: ['Lumière', 'Courage', 'Mystère'], correct: 0 },
+    { level: 3, name: 'Le grand oui', letter: 'T', text: 'Quel genre de déclaration touche vraiment ?', answers: ['Celle qui est sincère', 'Celle qui est publique', 'Celle qui est très longue'], correct: 0 },
+    { level: 3, name: 'Le grand oui', letter: 'A', text: 'L’amour ressemble davantage à…', answers: ['Un feu d’artifice', 'Une maison où revenir', 'Une chanson connue'], correct: 1 },
+    { level: 3, name: 'Le grand oui', letter: 'L', text: 'Le plus beau cadeau à offrir est…', answers: ['Son attention entière', 'Son temps', 'Sa confiance'], correct: 2 },
+    { level: 3, name: 'Le grand oui', letter: 'I', text: 'Et le message final de Nephtali ?', answers: ['Tu es rare, Chandrelle.', 'Tout commence maintenant.', 'Les deux, évidemment.'], correct: 2 }
   ];
-  let current = 0, score = 0, answered = false;
+  let current = 0, score = 0, answered = false, roomCode = '', playerNumber = 0, pollTimer;
   const intro = document.getElementById('intro'), quiz = document.getElementById('quiz'), result = document.getElementById('result');
   const questionText = document.getElementById('questionText'), questionKicker = document.getElementById('questionKicker'), answers = document.getElementById('answers');
   function renderQuestion() {
     const question = questions[current]; answered = false;
     document.getElementById('currentStep').textContent = String(current + 1).padStart(2, '0');
-    document.getElementById('progressBar').style.width = `${(current / questions.length) * 100}%`;
+    document.getElementById('progressBar').style.width = `${((current + 1) / questions.length) * 100}%`;
+    document.getElementById('levelName').textContent = `Chapitre ${question.level} · ${question.name}`;
+    document.querySelectorAll('.level-dot').forEach((dot, index) => dot.classList.toggle('active', index === question.level - 1));
     questionKicker.textContent = `Lettre ${question.letter}`; questionText.textContent = question.text; answers.innerHTML = '';
     document.getElementById('nextButton').classList.remove('ready');
     question.answers.forEach((answer, index) => { const button = document.createElement('button'); button.className = 'answer'; button.textContent = answer; button.onclick = () => chooseAnswer(button, index); answers.appendChild(button); });
@@ -130,7 +186,18 @@
     document.getElementById('score').textContent = score; document.getElementById('nextButton').classList.add('ready');
   }
   document.getElementById('startButton').onclick = () => { intro.style.display = 'none'; quiz.classList.add('is-visible'); renderQuestion(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  document.getElementById('nextButton').onclick = () => { if (current < questions.length - 1) { current++; renderQuestion(); } else { quiz.classList.remove('is-visible'); result.classList.add('is-visible'); document.getElementById('resultText').textContent = `Tu as obtenu ${score} réponse${score > 1 ? 's' : ''} qui te ressemble${score > 1 ? 'nt' : ''}. Mais la vraie réponse était là depuis le début : ce prénom est devenu un joli secret entre nous.`; } };
+  document.getElementById('nextButton').onclick = () => { if (current < questions.length - 1) { current++; renderQuestion(); } else { quiz.classList.remove('is-visible'); result.classList.add('is-visible'); document.getElementById('resultText').textContent = `Tu as obtenu ${score} réponse${score > 1 ? 's' : ''} juste${score > 1 ? 's' : ''} sur ${questions.length}. Mais la vraie réponse était là depuis le début : ce prénom est devenu un joli secret entre nous.`; } };
   document.getElementById('restartButton').onclick = () => { current = 0; score = 0; result.classList.remove('is-visible'); quiz.classList.add('is-visible'); renderQuestion(); };
+
+  const showMode = (mode) => { intro.style.display = mode === 'intro' ? '' : 'none'; quiz.classList.toggle('is-visible', mode === 'quiz'); document.getElementById('ludo').classList.toggle('is-visible', mode === 'ludo'); document.querySelectorAll('.mode-button').forEach(button => button.classList.toggle('active', button.id === `${mode}Mode`)); if (mode === 'quiz') renderQuestion(); };
+  document.getElementById('quizMode').onclick = () => showMode('quiz'); document.getElementById('ludoMode').onclick = () => showMode('ludo'); document.getElementById('backToQuiz').onclick = () => showMode('quiz');
+  const roomNote = document.getElementById('roomNote'), boardCard = document.getElementById('boardCard');
+  async function ludoRequest(url, options) { const response = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options }); const data = await response.json(); if (!response.ok) throw new Error(data.error); return data; }
+  function drawBoard(state) { const board = document.getElementById('ludoBoard'); board.innerHTML = ''; for (let i = 0; i < 32; i++) { const cell = document.createElement('div'); cell.className = `ludo-cell ${i < 24 ? 'path' : 'goal'}`; if (i < 24) cell.textContent = i + 1; [0, 1].forEach(player => { if (state.positions[player] === i + 1) { const piece = document.createElement('span'); piece.className = `ludo-piece ${player === 0 ? 'one' : 'two'}`; cell.appendChild(piece); } }); board.appendChild(cell); } }
+  function updateBoard(state) { drawBoard(state); document.getElementById('turnLabel').textContent = state.winner ? `Le joueur ${state.winner} a gagné ♥` : state.players < 2 ? 'En attente du deuxième joueur…' : state.turn === playerNumber ? 'À toi de jouer ♥' : `Tour du joueur ${state.turn}`; document.getElementById('dice').textContent = state.dice || '♡'; document.getElementById('rollButton').disabled = state.players < 2 || state.turn !== playerNumber || Boolean(state.winner); }
+  async function enterRoom(data) { roomCode = data.code; playerNumber = data.player; boardCard.classList.add('is-visible'); document.getElementById('playerLabel').textContent = `Joueur ${playerNumber}`; document.getElementById('roomLabel').textContent = `Salon ${roomCode}`; document.getElementById('roomCode').value = roomCode; updateBoard(data.state); clearInterval(pollTimer); pollTimer = setInterval(async () => { try { updateBoard(await ludoRequest(`/api/ludo/${roomCode}`)); } catch (error) {} }, 1800); }
+  document.getElementById('createRoom').onclick = async () => { try { await enterRoom(await ludoRequest('/api/ludo/create', { method: 'POST', body: '{}' })); roomNote.innerHTML = 'Partage ce code avec ton partenaire : <strong>' + roomCode + '</strong>'; } catch (error) { roomNote.textContent = error.message; } };
+  document.getElementById('joinRoom').onclick = async () => { try { await enterRoom(await ludoRequest('/api/ludo/join', { method: 'POST', body: JSON.stringify({ code: document.getElementById('roomCode').value }) })); roomNote.textContent = 'Salon rejoint. Que le cœur le plus chanceux gagne.'; } catch (error) { roomNote.textContent = error.message; } };
+  document.getElementById('rollButton').onclick = async () => { try { updateBoard(await ludoRequest(`/api/ludo/${roomCode}/move`, { method: 'POST', body: JSON.stringify({ player: playerNumber }) })); } catch (error) { roomNote.textContent = error.message; } };
 </script>
 {% endblock %}
