@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}LinkService | Authentification{% endblock %}
+{% block content %}
+<header class="topbar">
+  <div class="container inner">
+    <div class="brand">
+      <div class="brand-mark">LS</div>
+      <span>LinkService</span>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('home') }}">Accueil</a>
+      <a class="btn" href="{{ url_for('home') }}">Retour</a>
+    </nav>
+  </div>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="form-shell">
+  <div class="auth-tabs">
+    <button class="active" type="button" onclick="showLogin()">Connexion</button>
+    <button type="button" onclick="showRegister()">Inscription</button>
+  </div>
+
+  <div id="loginForm" class="auth-form">
+    <form method="POST" action="{{ url_for('auth') }}">
+      <input type="hidden" name="action" value="login">
+      <div class="grid-2">
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>Adresse e-mail</label>
+          <input type="email" name="email" required>
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>Mot de passe</label>
+          <input type="password" name="password" required>
+        </div>
+      </div>
+      <div class="button-row">
+        <button type="submit" class="btn btn-primary">Se connecter</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="registerForm" class="auth-form" style="display:none;">
+    <form method="POST" action="{{ url_for('auth') }}">
+      <input type="hidden" name="action" value="register">
+      <div class="grid-2">
+        <div class="field">
+          <label>Nom</label>
+          <input type="text" name="nom" required>
+        </div>
+        <div class="field">
+          <label>Prénom</label>
+          <input type="text" name="prenom" required>
+        </div>
+        <div class="field">
+          <label>Date de naissance</label>
+          <input type="date" name="date_naissance" required>
+        </div>
+        <div class="field">
+          <label>Lieu de naissance</label>
+          <input type="text" name="lieu_naissance" required>
+        </div>
+        <div class="field">
+          <label>Nature de l'utilisateur</label>
+          <select name="nature" required>
+            <option value="Demandeur de services">Demandeur de services</option>
+            <option value="Prestataire">Prestataire</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Numéro de téléphone</label>
+          <input type="tel" name="telephone" required>
+        </div>
+        <div class="field">
+          <label>Adresse e-mail</label>
+          <input type="email" name="email" required>
+        </div>
+        <div class="field">
+          <label>Ville</label>
+          <input type="text" name="ville">
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <input type="password" name="password" required>
+        </div>
+        <div class="field">
+          <label>Confirmer le mot de passe</label>
+          <input type="password" name="confirm_password" required>
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>Nature de la prestation (pour prestataire)</label>
+          <input type="text" name="prestation" placeholder="Ex: plomberie, coiffure, informatique...">
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>Biographie</label>
+          <textarea name="bio" placeholder="Décrivez votre profil ou votre expertise..."></textarea>
+        </div>
+      </div>
+      <div class="button-row">
+        <button type="submit" class="btn btn-secondary">Créer mon compte</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function showLogin() {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+    document.querySelectorAll('.auth-tabs button')[0].classList.add('active');
+    document.querySelectorAll('.auth-tabs button')[1].classList.remove('active');
+  }
+  function showRegister() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.querySelectorAll('.auth-tabs button')[1].classList.add('active');
+    document.querySelectorAll('.auth-tabs button')[0].classList.remove('active');
+  }
+</script>
+{% endblock %}

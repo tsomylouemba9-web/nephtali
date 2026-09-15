@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Nephtali | Pour Chandrelle{% endblock %}
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
+  :root { --ink: #241c2c; --rose: #e56b83; --cream: #fff9f2; --gold: #e6b866; }
+  .love-game { min-height: 100vh; overflow: hidden; position: relative; color: var(--ink); background: #f8e8e6; font-family: 'DM Sans', sans-serif; }
+  .love-game::before, .love-game::after { content: ''; position: absolute; border-radius: 50%; pointer-events: none; filter: blur(2px); }
+  .love-game::before { width: 420px; height: 420px; right: -120px; top: 80px; background: rgba(229,107,131,.22); }
+  .love-game::after { width: 300px; height: 300px; left: -130px; bottom: 10px; background: rgba(230,184,102,.22); }
+  .game-nav { max-width: 1180px; margin: auto; padding: 27px 28px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+  .game-logo { font: 800 23px 'Playfair Display', serif; letter-spacing: .04em; }
+  .game-logo span { color: var(--rose); }
+  .nav-note { color: #806d77; font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+  .game-main { max-width: 1180px; margin: 28px auto 0; padding: 0 28px 70px; position: relative; z-index: 1; }
+  .intro { display: grid; grid-template-columns: .9fr 1.1fr; gap: 80px; align-items: center; min-height: 600px; }
+  .eyebrow { color: var(--rose); font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+  .intro h1 { font: 800 clamp(3.5rem, 7vw, 6.7rem)/.91 'Playfair Display', serif; letter-spacing: -.045em; margin: 18px 0 24px; }
+  .intro h1 em { color: var(--rose); font-style: normal; }
+  .intro p { max-width: 410px; color: #715f69; font-size: 17px; line-height: 1.7; }
+  .start-button, .next-button, .restart-button { border: 0; border-radius: 2px; cursor: pointer; font: 700 14px 'DM Sans', sans-serif; transition: transform .2s, box-shadow .2s; }
+  .start-button { background: var(--ink); color: white; padding: 17px 25px; margin-top: 18px; box-shadow: 8px 8px 0 var(--gold); }
+  .start-button:hover, .next-button:hover, .restart-button:hover { transform: translateY(-3px); }
+  .letter-orbit { min-height: 500px; border: 1px solid rgba(36,28,44,.11); background: rgba(255,249,242,.46); display: flex; align-items: center; justify-content: center; position: relative; }
+  .orbit-ring { width: min(400px, 80vw); aspect-ratio: 1; border: 1px solid rgba(229,107,131,.4); border-radius: 50%; display: grid; place-items: center; position: relative; }
+  .orbit-ring::before { content: ''; position: absolute; inset: 35px; border: 1px dashed rgba(36,28,44,.18); border-radius: 50%; }
+  .orbit-center { width: 160px; height: 160px; background: var(--ink); color: white; border-radius: 50%; display: grid; place-items: center; text-align: center; box-shadow: 0 22px 40px rgba(36,28,44,.2); }
+  .orbit-center strong { display: block; font: 700 29px 'Playfair Display', serif; }
+  .orbit-center small { color: #e9c4c8; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; }
+  .orbit-letter { position: absolute; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--cream); color: var(--rose); font: 700 19px 'Playfair Display', serif; box-shadow: 0 6px 15px rgba(36,28,44,.12); }
+  .orbit-letter:nth-child(1) { top: -22px; } .orbit-letter:nth-child(2) { right: 14px; top: 14%; } .orbit-letter:nth-child(3) { right: -20px; bottom: 22%; } .orbit-letter:nth-child(4) { bottom: -22px; } .orbit-letter:nth-child(5) { left: -20px; bottom: 22%; } .orbit-letter:nth-child(6) { left: 14px; top: 14%; }
+  .quiz { display: none; max-width: 780px; margin: 0 auto; padding-top: 30px; animation: rise .5s ease both; }
+  .quiz.is-visible { display: block; }
+  .quiz-top { display: flex; justify-content: space-between; align-items: end; margin-bottom: 18px; }
+  .quiz-top h2 { font: 700 31px 'Playfair Display', serif; margin: 0; }
+  .step-count { color: #806d77; font-size: 13px; }
+  .progress { height: 5px; background: rgba(36,28,44,.1); margin-bottom: 36px; }
+  .progress-bar { height: 100%; width: 0; background: var(--rose); transition: width .4s ease; }
+  .question-card { background: rgba(255,249,242,.85); padding: clamp(25px, 5vw, 53px); border: 1px solid rgba(36,28,44,.11); box-shadow: 14px 14px 0 rgba(230,184,102,.55); }
+  .question-kicker { color: var(--rose); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .question-card h3 { font: 700 clamp(1.8rem, 4vw, 2.6rem)/1.15 'Playfair Display', serif; margin: 15px 0 28px; }
+  .answers { display: grid; gap: 12px; }
+  .answer { border: 1px solid #e7d7d4; background: transparent; color: var(--ink); padding: 16px 18px; text-align: left; cursor: pointer; font: 600 14px 'DM Sans', sans-serif; transition: background .2s, border .2s, transform .2s; }
+  .answer:hover { border-color: var(--rose); transform: translateX(4px); }
+  .answer.selected { background: var(--ink); color: white; border-color: var(--ink); }
+  .answer.correct { background: #d8eddd; border-color: #73b782; color: #234b2a; }
+  .answer.wrong { background: #f7d9db; border-color: #d8878d; color: #762f37; }
+  .answer:disabled { cursor: default; transform: none; }
+  .question-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; min-height: 46px; }
+  .heart-score { color: #806d77; font-size: 13px; } .heart-score b { color: var(--rose); }
+  .next-button { display: none; background: var(--rose); color: white; padding: 14px 21px; }
+  .next-button.ready { display: block; }
+  .result { display: none; text-align: center; padding: 58px 20px; animation: rise .5s ease both; }
+  .result.is-visible { display: block; }
+  .result-mark { color: var(--rose); font-size: 43px; }
+  .result h2 { font: 700 clamp(2.7rem, 7vw, 5.3rem)/1 'Playfair Display', serif; margin: 12px 0 18px; }
+  .result h2 span { color: var(--rose); }
+  .result p { color: #715f69; font-size: 16px; line-height: 1.7; max-width: 530px; margin: auto; }
+  .reveal-word { margin: 35px auto; color: var(--ink); font: 700 clamp(2rem, 6vw, 4.2rem) 'Playfair Display', serif; letter-spacing: .18em; }
+  .restart-button { background: transparent; border: 1px solid var(--ink); color: var(--ink); padding: 14px 21px; margin-top: 26px; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 800px) { .intro { grid-template-columns: 1fr; gap: 40px; min-height: auto; } .letter-orbit { min-height: 390px; } .game-main { margin-top: 0; } .nav-note { display: none; } .game-nav { padding: 22px 20px; } .game-main { padding-inline: 20px; } }
+</style>
+
+<div class="love-game">
+  <header class="game-nav"><div class="game-logo">neph<span>t</span>ali</div><div class="nav-note">une expérience pour Chandrelle</div></header>
+  <main class="game-main">
+    <section class="intro" id="intro">
+      <div>
+        <div class="eyebrow">Chapitre 01 · le cœur sait</div>
+        <h1>Chandrelle,<br><em>à toi</em> de jouer.</h1>
+        <p>Un petit quiz imaginé autour de ton prénom. Huit questions, huit lettres, et une surprise au bout du chemin.</p>
+        <button class="start-button" id="startButton">Ouvrir le quiz <span aria-hidden="true">→</span></button>
+      </div>
+      <div class="letter-orbit" aria-label="Les lettres de Nephtali">
+        <div class="orbit-ring">
+          <div class="orbit-letter">N</div><div class="orbit-letter">E</div><div class="orbit-letter">P</div><div class="orbit-letter">H</div><div class="orbit-letter">T</div><div class="orbit-letter">A</div>
+          <div class="orbit-center"><div><strong>Nephtali</strong><small>pour Chandrelle</small></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="quiz" id="quiz" aria-live="polite">
+      <div class="quiz-top"><h2>Le quiz de Chandrelle</h2><div class="step-count"><span id="currentStep">01</span> / 08</div></div>
+      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="question-card">
+        <div class="question-kicker" id="questionKicker">Lettre N</div>
+        <h3 id="questionText"></h3>
+        <div class="answers" id="answers"></div>
+        <div class="question-footer"><div class="heart-score">Affinité <b id="score">0</b> / 8 <span aria-hidden="true">♥</span></div><button class="next-button" id="nextButton">Question suivante →</button></div>
+      </div>
+    </section>
+
+    <section class="result" id="result">
+      <div class="result-mark">♥</div><div class="eyebrow">Fin du chapitre</div>
+      <h2>Chandrelle, tu es<br><span>inoubliable.</span></h2>
+      <p id="resultText"></p><div class="reveal-word">NEPHTALI</div>
+      <button class="restart-button" id="restartButton">Rejouer le quiz</button>
+    </section>
+  </main>
+</div>
+
+<script>
+  const questions = [
+    { letter: 'N', text: 'Dans une histoire qui commence bien, qu’est-ce qui compte le plus ?', answers: ['Les grands discours', 'La complicité dans les petits moments', 'Avoir toujours raison'], correct: 1 },
+    { letter: 'E', text: 'Quelle énergie te ressemble le plus, Chandrelle ?', answers: ['Douce, mais pleine de caractère', 'Mystérieuse et imprévisible', 'Toujours prête à faire rire'], correct: 0 },
+    { letter: 'P', text: 'Le rendez-vous parfait serait plutôt…', answers: ['Un coucher de soleil et une longue conversation', 'Une aventure improvisée', 'Un dîner avec de la musique'], correct: 0 },
+    { letter: 'H', text: 'Quel geste fait fondre un cœur sans faire de bruit ?', answers: ['Se souvenir des détails', 'Envoyer une chanson', 'Être là, simplement'], correct: 2 },
+    { letter: 'T', text: 'Dans le mot « tendresse », tu préfères…', answers: ['Le regard qui rassure', 'Le rire qui surprend', 'Le silence qui comprend'], correct: 2 },
+    { letter: 'A', text: 'Quelle promesse mérite d’être tenue ?', answers: ['Ne jamais cesser de choisir l’autre', 'Toujours dire la vérité avec douceur', 'Créer des souvenirs à deux'], correct: 0 },
+    { letter: 'L', text: 'Que devrait toujours avoir une belle relation ?', answers: ['De la liberté', 'De la loyauté', 'Un peu de folie'], correct: 1 },
+    { letter: 'I', text: 'Et si ce quiz avait un message caché… tu le lirais ?', answers: ['Oui, sans hésiter', 'Seulement si c’est romantique', 'Je le sais déjà'], correct: 0 }
+  ];
+  let current = 0, score = 0, answered = false;
+  const intro = document.getElementById('intro'), quiz = document.getElementById('quiz'), result = document.getElementById('result');
+  const questionText = document.getElementById('questionText'), questionKicker = document.getElementById('questionKicker'), answers = document.getElementById('answers');
+  function renderQuestion() {
+    const question = questions[current]; answered = false;
+    document.getElementById('currentStep').textContent = String(current + 1).padStart(2, '0');
+    document.getElementById('progressBar').style.width = `${(current / questions.length) * 100}%`;
+    questionKicker.textContent = `Lettre ${question.letter}`; questionText.textContent = question.text; answers.innerHTML = '';
+    document.getElementById('nextButton').classList.remove('ready');
+    question.answers.forEach((answer, index) => { const button = document.createElement('button'); button.className = 'answer'; button.textContent = answer; button.onclick = () => chooseAnswer(button, index); answers.appendChild(button); });
+  }
+  function chooseAnswer(button, index) {
+    if (answered) return; answered = true; const question = questions[current];
+    document.querySelectorAll('.answer').forEach(item => item.disabled = true);
+    button.classList.add(index === question.correct ? 'correct' : 'wrong');
+    if (index === question.correct) score++; else document.querySelectorAll('.answer')[question.correct].classList.add('correct');
+    document.getElementById('score').textContent = score; document.getElementById('nextButton').classList.add('ready');
+  }
+  document.getElementById('startButton').onclick = () => { intro.style.display = 'none'; quiz.classList.add('is-visible'); renderQuestion(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  document.getElementById('nextButton').onclick = () => { if (current < questions.length - 1) { current++; renderQuestion(); } else { quiz.classList.remove('is-visible'); result.classList.add('is-visible'); document.getElementById('resultText').textContent = `Tu as obtenu ${score} réponse${score > 1 ? 's' : ''} qui te ressemble${score > 1 ? 'nt' : ''}. Mais la vraie réponse était là depuis le début : ce prénom est devenu un joli secret entre nous.`; } };
+  document.getElementById('restartButton').onclick = () => { current = 0; score = 0; result.classList.remove('is-visible'); quiz.classList.add('is-visible'); renderQuestion(); };
+</script>
+{% endblock %}

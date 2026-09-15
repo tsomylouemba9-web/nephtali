@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}LinkService | Profil{% endblock %}
+{% block content %}
+<header class="topbar">
+  <div class="container inner">
+    <div class="brand">
+      <div class="brand-mark">LS</div>
+      <span>LinkService</span>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('messages') }}">Messages</a>
+      <a class="btn" href="{{ url_for('logout') }}">Déconnexion</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container" style="padding: 40px 0 60px;">
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="avatar">{{ user.prenom[0]|upper }}{{ user.nom[0]|upper }}</div>
+      <div>
+        <h2 style="margin: 0;">{{ user.prenom }} {{ user.nom }}</h2>
+        <p style="margin: 6px 0 0; color: var(--muted);">{{ user.nature }} • {{ user.ville or 'Ville non renseignée' }}</p>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="meta"><strong>Nom :</strong> {{ user.nom }}</div>
+      <div class="meta"><strong>Prénom :</strong> {{ user.prenom }}</div>
+      <div class="meta"><strong>Date naissance :</strong> {{ user.date_naissance or 'Non renseignée' }}</div>
+      <div class="meta"><strong>Lieu naissance :</strong> {{ user.lieu_naissance or 'Non renseigné' }}</div>
+      <div class="meta"><strong>Téléphone :</strong> {{ user.telephone }}</div>
+      <div class="meta"><strong>E-mail :</strong> {{ user.email }}</div>
+      <div class="meta"><strong>Prestation :</strong> {{ user.prestation or 'N/A' }}</div>
+      <div class="meta"><strong>Ville :</strong> {{ user.ville or 'Non renseignée' }}</div>
+    </div>
+
+    <div class="meta" style="margin-top: 14px;">
+      <strong>Biographie :</strong>
+      <p style="margin: 10px 0 0; line-height: 1.8; color: var(--muted);">{{ user.bio or 'Aucune biographie renseignée.' }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

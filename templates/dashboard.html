@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}LinkService | Tableau de bord{% endblock %}
+{% block content %}
+<header class="topbar">
+  <div class="container inner">
+    <div class="brand">
+      <div class="brand-mark">LS</div>
+      <span>LinkService</span>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('profile') }}">Profil</a>
+      <a href="{{ url_for('messages') }}">Messages</a>
+      <a class="btn" href="{{ url_for('logout') }}">Déconnexion</a>
+    </nav>
+  </div>
+</header>
+
+<div class="dashboard">
+  <div class="dashboard-shell">
+    <div class="feed">
+      <div class="toolbar">
+        <input type="text" placeholder="Recherche universelle..." />
+        <select>
+          <option>Tous</option>
+          <option>Urgent</option>
+          <option>Top avis</option>
+          <option>À proximité</option>
+        </select>
+      </div>
+
+      <div class="post" style="background: linear-gradient(135deg,#f8fbff,#eef7ff); border-color:#dbeafe;">
+        <div class="post-head">
+          <strong>{{ user.prenom }} {{ user.nom }}</strong>
+          <span class="pill">Actualités</span>
+        </div>
+        <p style="margin: 0; color: var(--muted); line-height: 1.7;">
+          Bienvenue dans votre espace {{ user.nature }}. Trouvez des offres, publiez une demande ou rejoignez une conversation active.
+        </p>
+      </div>
+
+      <form method="POST" action="{{ url_for('create_post') }}" style="margin-bottom: 20px;">
+        <textarea name="content" rows="4" placeholder="Partagez une publication, une demande ou une prestation..." style="width:100%; border:1px solid var(--line); border-radius:16px; padding: 14px; font: inherit; resize: vertical;"></textarea>
+        <div style="margin-top: 12px;">
+          <button type="submit" class="btn btn-secondary">Publier</button>
+        </div>
+      </form>
+
+      {% for post in posts %}
+      <div class="post">
+        <div class="post-head">
+          <strong>{{ post.prenom }} {{ post.nom }}</strong>
+          <span class="pill">{{ post.nature }}</span>
+        </div>
+        <p style="margin: 0; color: var(--text); line-height: 1.8;">{{ post.content }}</p>
+        <div style="color: var(--muted); margin-top: 10px; font-size: 12px;">{{ post.created_at }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <aside class="sidebar">
+      <h3 style="margin-top: 0;">Messages rapides</h3>
+      <div class="chat-box">
+        <div class="message other">Miriam : Bonjour, avez-vous un service de maintenance rapide ?</div>
+        <div class="message me">Vous : Oui, je peux vous mettre en relation avec un prestataire disponible.</div>
+        <div class="message other">Ariane : Je cherche une personne pour une rénovation légère.</div>
+        <div class="message me">Vous : J’ai plusieurs profils potentiels disponibles aujourd'hui.</div>
+      </div>
+      <div style="margin-top: 16px;">
+        <a href="{{ url_for('messages') }}" class="btn btn-primary" style="display: inline-block;">Ouvrir la messagerie</a>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

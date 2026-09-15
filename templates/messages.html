@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}LinkService | Messages{% endblock %}
+{% block content %}
+<header class="topbar">
+  <div class="container inner">
+    <div class="brand">
+      <div class="brand-mark">LS</div>
+      <span>LinkService</span>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}">Accueil</a>
+      <a href="{{ url_for('profile') }}">Profil</a>
+      <a class="btn" href="{{ url_for('logout') }}">Déconnexion</a>
+    </nav>
+  </div>
+</header>
+
+<div class="dashboard">
+  <div class="dashboard-shell" style="grid-template-columns: 1fr 1.5fr;">
+    <div class="sidebar">
+      <h3 style="margin-top: 0;">Contacts</h3>
+      {% for contact in users %}
+      <div class="post" style="padding: 14px 16px; margin-bottom: 10px;">
+        <strong>{{ contact.prenom }} {{ contact.nom }}</strong><br>
+        <span style="color: var(--muted); font-size: 13px;">{{ contact.nature }} • {{ contact.ville or 'Ville non renseignée' }}</span>
+        <form method="POST" action="{{ url_for('messages') }}" style="margin-top: 10px;">
+          <input type="hidden" name="receiver_id" value="{{ contact.id }}">
+          <input type="text" name="content" placeholder="Écrire un message..." style="width:100%; border:1px solid var(--line); border-radius:10px; padding:10px;">
+          <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Envoyer</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="feed">
+      <h3 style="margin-top: 0;">Messagerie instantanée</h3>
+      <div class="chat-box">
+        {% for msg in messages %}
+          {% if msg.sender_id == user.id %}
+            <div class="message me">Vous : {{ msg.content }}</div>
+          {% else %}
+            <div class="message other">{{ msg.prenom }} {{ msg.nom }} : {{ msg.content }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local runtime data
+linkservice.db
+users_data.json
+
+# Editor and local state
+.vscode/
+state.vscdb
+state.vscdb.backup
+
+# Environment and secrets
+.env
+*.local
