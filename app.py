@@ -195,6 +195,21 @@ def ludo_move(code):
     return state
 
 
+@app.post("/api/ludo/<code>/emotion")
+def ludo_emotion(code):
+    data = request.get_json(silent=True) or {}
+    player = int(data.get("player", 0))
+    emoji = data.get("emoji", "").strip()
+    state = read_room(code)
+    if not state:
+        return {"error": "Salon introuvable."}, 404
+    if player not in (1, 2) or emoji not in {"❤️", "😂", "🔥", "😮", "👏", "✨"}:
+        return {"error": "Réaction invalide."}, 400
+    state["reaction"] = {"player": player, "emoji": emoji, "id": random.randint(100000, 999999)}
+    save_room(code, state)
+    return state
+
+
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
     if request.method == "POST":
