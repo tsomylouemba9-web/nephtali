@@ -103,6 +103,9 @@ def save_room(code, state):
     conn.close()
 
 
+init_db()
+
+
 @app.context_processor
 def inject_user():
     return {"current_user": session.get("user")}
