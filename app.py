@@ -96,10 +96,16 @@ def read_room(code):
     if not room:
         return None
     state = json.loads(room["state"])
-    if state.get("positions") and isinstance(state["positions"][0], int):
-        state["positions"] = [[state["positions"][0], -1, -1, -1], [state["positions"][1], -1, -1, -1]]
+    if state.get("positions") and isinstance(state["positions"][0], list):
+        state["positions"] = [min(48, state["positions"][0][0] if state["positions"][0] else 0), min(48, state["positions"][1][0] if state["positions"][1] else 0)]
+    if state.get("positions") and isinstance(state["positions"][0], int) and "pending_steps" not in state:
+        state["positions"] = [min(48, state["positions"][0]), min(48, state["positions"][1])]
     state.setdefault("dice", None)
     state.setdefault("winner", None)
+    state.setdefault("pending_steps", 0)
+    state.setdefault("obstacle", None)
+    state.setdefault("trust", 3)
+    state.setdefault("harmony", 0)
     return state
 
 
@@ -108,6 +114,30 @@ def save_room(code, state):
     conn.execute("UPDATE ludo_rooms SET state = ? WHERE code = ?", (json.dumps(state), code.upper()))
     conn.commit()
     conn.close()
+
+
+LOVE_OBSTACLES = {
+    7: {"title": "Le doute", "text": "Un message ambigu vient troubler la confiance.", "options": ["Rester fidèle et en parler", "Suivre la tentation"]},
+    14: {"title": "La distance", "text": "Une occasion éloigne les deux cœurs.", "options": ["Se choisir malgré la distance", "S'échapper vers une autre histoire"]},
+    22: {"title": "La jalousie", "text": "Un partenaire ennemi apparaît sur le chemin.", "options": ["Faire confiance", "Répondre à la tentation"]},
+    30: {"title": "La dispute", "text": "Les mots dépassent la pensée. Il faut réparer ensemble.", "options": ["Écouter et pardonner", "Garder son orgueil"]},
+    38: {"title": "Le sacrifice", "text": "Le chemin propose un raccourci, mais il faut laisser l'autre derrière.", "options": ["Avancer ensemble", "Prendre le raccourci seul"]},
+    44: {"title": "La dernière tentation", "text": "L'ennemi amoureux promet une route plus facile.", "options": ["Rester fidèle jusqu'au cœur", "Céder à la facilité"]},
+}
+
+
+def fresh_ludo_state():
+    return {
+        "players": 1,
+        "turn": 1,
+        "dice": None,
+        "positions": [0, 0],
+        "pending_steps": 0,
+        "obstacle": None,
+        "winner": None,
+        "trust": 3,
+        "harmony": 0,
+    }
 
 
 init_db()
@@ -126,7 +156,7 @@ def home():
 @app.post("/api/ludo/create")
 def create_ludo_room():
     code = new_room_code()
-    state = {"players": 1, "turn": 1, "dice": None, "positions": [[-1, -1, -1, -1], [-1, -1, -1, -1]], "winner": None}
+    state = fresh_ludo_state()
     conn = get_db()
     conn.execute("INSERT INTO ludo_rooms (code, state) VALUES (?, ?)", (code, json.dumps(state)))
     conn.commit()
@@ -160,7 +190,6 @@ def ludo_state(code):
 def ludo_move(code):
     data = request.get_json(silent=True) or {}
     player = int(data.get("player", 0))
-    piece = int(data.get("piece", 0))
     state = read_room(code)
     if not state:
         return {"error": "Salon introuvable."}, 404
@@ -168,29 +197,59 @@ def ludo_move(code):
         return {"error": "Invite un deuxième joueur avant de jouer."}, 409
     if player != state["turn"] or state["winner"]:
         return {"error": "Ce n'est pas ton tour."}, 409
-    if piece not in range(4):
-        return {"error": "Pion invalide."}, 400
-    roll = random.randint(1, 6)
-    state["dice"] = roll
-    current_position = state["positions"][player - 1][piece]
-    next_position = current_position
-    if current_position == -1 and roll == 6:
-        next_position = 0
-    elif current_position >= 0 and current_position + roll <= 24:
-        next_position = current_position + roll
-    state["positions"][player - 1][piece] = next_position
-    captured = False
-    if next_position >= 0 and next_position < 24 and next_position not in {0, 6, 12, 18}:
-        other_player = 1 if player == 2 else 2
-        for other_piece in range(4):
-            if state["positions"][other_player - 1][other_piece] == next_position:
-                state["positions"][other_player - 1][other_piece] = -1
-                captured = True
-    if all(position == 24 for position in state["positions"][player - 1]):
-        state["winner"] = player
+    if state.get("pending_steps", 0) or state.get("obstacle"):
+        return {"error": "Termine le mouvement ou la décision en cours."}, 409
+    state["dice"] = random.randint(1, 6)
+    state["pending_steps"] = state["dice"]
+    state["last_action"] = f"Le joueur {player} a lancé un {state['dice']}."
+    save_room(code, state)
+    return state
+
+
+@app.post("/api/ludo/<code>/step")
+def ludo_step(code):
+    data = request.get_json(silent=True) or {}
+    player = int(data.get("player", 0))
+    state = read_room(code)
+    if not state:
+        return {"error": "Salon introuvable."}, 404
+    if player != state["turn"] or state.get("pending_steps", 0) <= 0:
+        return {"error": "Aucun pas ne peut être joué maintenant."}, 409
+    state["positions"][player - 1] = min(48, state["positions"][player - 1] + 1)
+    state["pending_steps"] -= 1
+    position = state["positions"][player - 1]
+    if position in LOVE_OBSTACLES and not state.get("obstacle"):
+        state["obstacle"] = {"position": position, **LOVE_OBSTACLES[position]}
+        state["pending_steps"] = 0
+    elif position >= 48 and state["positions"][0] >= 48 and state["positions"][1] >= 48:
+        state["winner"] = "coop"
+    elif state["pending_steps"] == 0:
+        state["turn"] = 2 if player == 1 else 1
+        state["last_action"] = f"Le cœur du joueur {player} avance à l'étape {position}."
+    save_room(code, state)
+    return state
+
+
+@app.post("/api/ludo/<code>/decision")
+def ludo_decision(code):
+    data = request.get_json(silent=True) or {}
+    player = int(data.get("player", 0))
+    choice = data.get("choice", "")
+    state = read_room(code)
+    if not state or not state.get("obstacle"):
+        return {"error": "Aucune décision n'est en attente."}, 409
+    if player not in (1, 2) or choice not in ("faithful", "temptation"):
+        return {"error": "Décision invalide."}, 400
+    if choice == "faithful":
+        state["harmony"] += 1
+        state["trust"] = min(5, state["trust"] + 1)
+        state["last_action"] = "Les deux cœurs sont restés fidèles."
     else:
-        state["turn"] = player if roll == 6 else (2 if player == 1 else 1)
-    state["captured"] = captured
+        state["trust"] = max(0, state["trust"] - 1)
+        state["positions"][player - 1] = max(0, state["positions"][player - 1] - 3)
+        state["last_action"] = "La tentation a laissé une distance entre les deux cœurs."
+    state["obstacle"] = None
+    state["turn"] = 2 if state["turn"] == 1 else 1
     save_room(code, state)
     return state
 
